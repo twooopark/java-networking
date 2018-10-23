@@ -8,6 +8,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -35,13 +36,13 @@ public class NIOServer {
                             SocketChannel socketChannel = serverChannel.accept(); // Non blocking, never null
                             socketChannel.configureBlocking(false);
                             log("Connected " + socketChannel.getRemoteAddress());
-                            sockets.put(socketChannel, ByteBuffer.allocate(1000)); // Allocating buffer for socket channel
+                            sockets.put(socketChannel, ByteBuffer.allocate(1024)); // Allocating buffer for socket channel
                             socketChannel.register(selector, SelectionKey.OP_READ);
                         } else if (key.isReadable()) {
                             SocketChannel socketChannel = (SocketChannel) key.channel();
                             ByteBuffer buffer = sockets.get(socketChannel);
                             int bytesRead = socketChannel.read(buffer); // Reading, non-blocking call
-                            log("Reading from " + socketChannel.getRemoteAddress() + ", bytes read=" + bytesRead);
+                            log("Reading from " + socketChannel.getRemoteAddress() +", "+ bytesRead + " bytes read");
 
                             // Detecting connection closed from client side
                             if (bytesRead == -1) {
@@ -63,7 +64,7 @@ public class NIOServer {
                             String clientMessage = new String(buffer.array(), buffer.position(), buffer.limit());
                             // Building response
                             String response = clientMessage.replace("\r\n", "") +
-                                    ", server time=" + System.currentTimeMillis() + "\r\n";
+                                    ", servertime=" + new Date().toString() + "\r\n";
 
                             // Writing response to buffer
                             buffer.clear();
@@ -71,7 +72,7 @@ public class NIOServer {
                             buffer.flip();
 
                             int bytesWritten = socketChannel.write(buffer); // woun't always write anything
-                            log("Writing to " + socketChannel.getRemoteAddress() + ", bytes writteb=" + bytesWritten);
+                            log("Writing to " + socketChannel.getRemoteAddress() + ", "+bytesWritten+" bytes written");
                             if (!buffer.hasRemaining()) {
                                 buffer.compact();
                                 socketChannel.register(selector, SelectionKey.OP_READ);
@@ -84,7 +85,7 @@ public class NIOServer {
             }
 
             selector.selectedKeys().clear();
-       }
+        }
     }
 
     private static void log(String message) {

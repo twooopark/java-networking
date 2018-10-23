@@ -3,13 +3,14 @@ package com.slisenko.server.socket;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class SocketServer {
 
     public static void main(String[] args) throws IOException {
-        ExecutorService pool = Executors.newFixedThreadPool(200);
+        //ExecutorService pool = Executors.newFixedThreadPool(200);
         ServerSocket serverSocket = new ServerSocket(45000);
         log("Server started at port 45000. Listening for client connections...");
 
@@ -18,11 +19,11 @@ public class SocketServer {
                 // Blocking call, never null
                 final Socket socket = serverSocket.accept();
                 handle(socket); // Handle in same thread
-//                new Thread(() -> handle(socket)).start(); // Handle in always new thread
-//                pool.submit(() -> handle(socket)); // Handle in thread pool
+//              new Thread(() -> handle(socket)).start(); // Handle in always new thread
+//              pool.submit(() -> handle(socket)); // Handle in thread pool
             }
         } finally {
-//            pool.shutdown();
+//          pool.shutdown();
             serverSocket.close();
         }
     }
@@ -33,6 +34,10 @@ public class SocketServer {
             InputStream in = socket.getInputStream();
             OutputStream out = socket.getOutputStream();
 
+            PrintWriter writer = new PrintWriter(out);
+            writer.println("connected!"); // Blocking call
+            writer.flush();
+
             // Receive message from the client
             BufferedReader reader = new BufferedReader(new InputStreamReader(in));
             String clientRequest = reader.readLine(); // Blocking call
@@ -40,8 +45,7 @@ public class SocketServer {
             log("receive from " + socket.getRemoteSocketAddress() + " > " + clientRequest);
 
             // Send response
-            String serverResponse = clientRequest + ", servertime=" + System.currentTimeMillis();
-            PrintWriter writer = new PrintWriter(out);
+            String serverResponse = clientRequest + ", servertime=" + new Date().toString();
             writer.println(serverResponse); // Blocking call
             writer.flush();
 
