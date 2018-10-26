@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class NIOServer {
-
     private static final Map<SocketChannel, ByteBuffer> sockets = new ConcurrentHashMap<>();
 
     public static void main(String[] args) throws IOException {
@@ -31,63 +30,66 @@ public class NIOServer {
             selector.select(); // Blocking call, but only one for everything
             for (SelectionKey key : selector.selectedKeys()) {
                 if (key.isValid()) {
-                    try {
-                        if (key.isAcceptable()) {
-                            SocketChannel socketChannel = serverChannel.accept(); // Non blocking, never null
-                            socketChannel.configureBlocking(false);
-                            log("Connected " + socketChannel.getRemoteAddress());
-                            sockets.put(socketChannel, ByteBuffer.allocate(1024)); // Allocating buffer for socket channel
-                            socketChannel.register(selector, SelectionKey.OP_READ);
-                        } else if (key.isReadable()) {
-                            SocketChannel socketChannel = (SocketChannel) key.channel();
-                            ByteBuffer buffer = sockets.get(socketChannel);
-                            int bytesRead = socketChannel.read(buffer); // Reading, non-blocking call
-                            log("Reading from " + socketChannel.getRemoteAddress() +", "+ bytesRead + " bytes read");
-
-                            // Detecting connection closed from client side
-                            if (bytesRead == -1) {
-                                log("Connection closed " + socketChannel.getRemoteAddress());
-                                sockets.remove(socketChannel);
-                                socketChannel.close();
-                            }
-
-                            // Detecting end of the message
-                            if (bytesRead > 0 && buffer.get(buffer.position() - 1) == '\n') {
-                                socketChannel.register(selector, SelectionKey.OP_WRITE);
-                            }
-                        } else if (key.isWritable()) {
-                            SocketChannel socketChannel = (SocketChannel) key.channel();
-                            ByteBuffer buffer = sockets.get(socketChannel);
-
-                            // Reading client message from buffer
-                            buffer.flip();
-                            String clientMessage = new String(buffer.array(), buffer.position(), buffer.limit());
-                            // Building response
-                            String response = clientMessage.replace("\r\n", "") +
-                                    ", servertime=" + new Date().toString() + "\r\n";
-
-                            // Writing response to buffer
-                            buffer.clear();
-                            buffer.put(ByteBuffer.wrap(response.getBytes()));
-                            buffer.flip();
-
-                            int bytesWritten = socketChannel.write(buffer); // woun't always write anything
-                            log("Writing to " + socketChannel.getRemoteAddress() + ", "+bytesWritten+" bytes written");
-                            if (!buffer.hasRemaining()) {
-                                buffer.compact();
-                                socketChannel.register(selector, SelectionKey.OP_READ);
-                            }
-                        }
-                    } catch (IOException e) {
-                        log("error " + e.getMessage());
+                    if (key.isAcceptable()) {
+                        acceptOP(serverChannel, selector);
+                    } else if (key.isReadable()) {
+                        readOP(key, selector);
+                    } else if (key.isWritable()) {
+                        writeOP(key, selector);
                     }
                 }
             }
-
             selector.selectedKeys().clear();
         }
     }
+    private static void acceptOP(ServerSocketChannel serverChannel, Selector selector) throws IOException {
+        SocketChannel socketChannel = serverChannel.accept(); // Non blocking, never null
+        socketChannel.configureBlocking(false);
+        log("Connected " + socketChannel.getRemoteAddress());
+        sockets.put(socketChannel, ByteBuffer.allocate(1024)); // Allocating buffer for socket channel
+        socketChannel.register(selector, SelectionKey.OP_READ);
+    }
+    private static void readOP(SelectionKey key, Selector selector) throws IOException {
+        SocketChannel socketChannel = (SocketChannel) key.channel();
+        ByteBuffer buffer = sockets.get(socketChannel);
+        int bytesRead = socketChannel.read(buffer); // Reading, non-blocking call
+        log("Reading from " + socketChannel.getRemoteAddress() +", "+ bytesRead + " bytes read");
 
+        // Detecting connection closed from client side
+        if (bytesRead == -1) {
+            log("Connection closed " + socketChannel.getRemoteAddress());
+            sockets.remove(socketChannel);
+            socketChannel.close();
+        }
+
+        // Detecting end of the message
+        if (bytesRead > 0 && buffer.get(buffer.position() - 1) == '\n') {
+            socketChannel.register(selector, SelectionKey.OP_WRITE);
+        }
+    }
+    private static void writeOP(SelectionKey key, Selector selector) throws IOException {
+        SocketChannel socketChannel = (SocketChannel) key.channel();
+        ByteBuffer buffer = sockets.get(socketChannel);
+
+        // Reading client message from buffer
+        buffer.flip();
+        String clientMessage = new String(buffer.array(), buffer.position(), buffer.limit());
+        // Building response
+        String response = clientMessage.replace("\r\n", "") +
+                ", servertime=" + new Date().toString() + "\r\n";
+
+        // Writing response to buffer
+        buffer.clear();
+        buffer.put(ByteBuffer.wrap(response.getBytes()));
+        buffer.flip();
+
+        int bytesWritten = socketChannel.write(buffer); // won't always write anything
+        log("Writing to " + socketChannel.getRemoteAddress() + ", "+bytesWritten+" bytes written");
+        if (!buffer.hasRemaining()) {
+            buffer.compact();
+            socketChannel.register(selector, SelectionKey.OP_READ);
+        }
+    }
     private static void log(String message) {
         System.out.println("[" + Thread.currentThread().getName() + "] " + message);
     }
