@@ -16,17 +16,17 @@ public class Server {
         System.out.println("[server] listening...");
 
         while (true) {
-            Socket socket = serverSocket.accept();
+            Socket socket = serverSocket.accept(); //서버 소켓에서 클라이언트와 연결할 소켓을 생성하고, 연결을 대기
             System.out.println("[server] connected from " + socket.getRemoteSocketAddress());
             try {
-                InputStream is = socket.getInputStream();
+                InputStream is = socket.getInputStream(); //생성한 소켓에서 읽는 바이트 스트림
 
                 byte[] buffer = new byte[BUFFERSIZE];
                 int readByteCount = is.read(buffer); // read() 반환값 : 스트림 데이터의 길이
 
                 if (readByteCount > 0) {
                     String inStr = new String(buffer, 0, readByteCount);
-                    String[] data = inStr.split("\\^", 2);//3); //data.length 생략
+                    String[] data = inStr.split("\\^", 2);//3);
                     int cmd = Integer.parseInt(data[0]);
 
                     if (cmd == Command.PRINT) {
@@ -51,7 +51,7 @@ public class Server {
             } finally {
                 try {
                     if (socket != null && socket.isClosed() == false) {
-                        socket.close();
+                            socket.close();
                         System.out.println("[server] disconnection by client");
                     }
                 } catch (IOException e) {
