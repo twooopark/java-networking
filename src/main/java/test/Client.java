@@ -1,80 +1,64 @@
 package test;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 
 public class Client {
-	private static final String SERVER_IP = "172.19.250.129";
-	private static final int SERVER_PORT = 5000;
-	
-	public static void main(String[] args) {
-		Socket socket = new Socket();
-		try {
-			socket.connect( new InetSocketAddress( SERVER_IP, SERVER_PORT ) );
+    private static final String SERVER_IP = "172.19.250.129";
+    private static final int SERVER_PORT = 5000;
 
-			InputStream is = socket.getInputStream();
-			OutputStream os = socket.getOutputStream();
+    public static void main(String[] args) {
+        Socket socket = new Socket();
+        try {
+            socket.connect(new InetSocketAddress(SERVER_IP, SERVER_PORT));
 
+            BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+            OutputStream os = socket.getOutputStream();
 
-			String str = "\n" +
-					"프로토콜 \n" +
-					"\t정의: 통신 규약\n" +
-					"\t목적: 체계를 갖춰 정확한 정보의 통신이 이루어질 수 있도록 하기 위함\n" +
-					"\n" +
-					"포함되는 기능\n" +
-					"\t1. 에러제어 : 에러 검출(CRC, checksum, parity check)과 정정 \n" +
-					"\t2. 흐름제어 : 정보 흐름의 양을 제어( 송.수신 속도를 맞춤 ) \n" +
-					"\t\t- 정지대기방식 : 수신확인 후 전송\n" +
-					"\t\t- 윈도우 기반: 여러 패킷을 동시 전송 (버퍼의 여유 용량에 따라 윈도우 크기 지정)\n" +
-					"\t3. 순서제어 : 패킷에 순서 번호를 부여, 순서 역전 방지\n" +
-					"\t4. 동기화 : 송수신 시점을 맞춤(start,stop bit(비동기통신) / 클록 신호 (동기통신)) \n" +
-					"\t5. 캡슐화 : 상위 계층에서 하위 계층으로 전달될 때, 각 계층 정보를 추가하는 것(각 계층 정보를 제외하고 캡슐화 한 것)\n" +
-					"\t6. 주소지정 : 주소 체계의 통일\n" +
-					"\t7. 단편화 : 조각으로 나눔(패킷이 길면, 버퍼의 낭비와 지연이 발생, 크기 제약 존재)\n" +
-					"\n" +
-					"이와 같은 여러 기능들을 어떻게 제어하고, 표기할 것인가에 대한 규약";
+            String inStr, outStr = null;
 
-//			byte[] data = str.getBytes();
-//
-//			BasicPacket bp = new BasicPacket( Command.PRINT, data.length, data);
-//
-//			ObjectOutputStream oos = new ObjectOutputStream(os);
-//
-//			oos.writeObject(bp);
-//
-//			System.out.println(data.length);
+            System.out.println("[client] /명령어 내용 입력");
+			inStr = br.readLine();
+//			inStr = "/PRINT Byte Stream부터 알아보자. Byte Stream은 데이터를 Byte 단위로 주고받는 것을 말한다. 대표적인 Byte Stream은 InputStream과 OutputStream이라고 배웠다. 그렇다면 InputStream과 OutputStream을 통과하는 단위는 당연히 Byte이다. 8bit의 이진 비트를 묶으면 Byte가 되는 바로 그 Byte이다. 원래 데이터는 모두 Byte이다. 알고 보면 그림도 Byte들로 이루어져 있고, 텍스트도 Byte로 이루어져 있다. 그리고 zip이나 jar같은 압축 파일도 일단은 Byte로 되어 있다. 이 Byte들이 적절하게 변환되면 의미 있는 데이터가 되는 것이다. Byte Stream의 경우에는 원시 Byte를 그대로 주고 받겠다는 의미를 담고있다.";
 
-			os.write( str.getBytes( "utf-8") );
+            //명령어와 내용 분리
+            String[] data = inStr.split(" ", 2);
 
-			byte[] buffer = new byte[ 256 ];
-			int readByteCount = is.read( buffer );
+            //명령어 별 처리
+            String cmd = data[0].toUpperCase();
+            if ("/PRINT".equals(cmd)) {
+                data[0] = String.valueOf(Command.PRINT);
+                outStr = data[0] + "^" + data[1];
+//              outStr = data[0] + "^" + data[1].length() + "^" + data[1];  //구분자 삽입
+            } else if ("/QUIT".equals(cmd)) {
+                data[0] = String.valueOf(Command.QUIT);
+                outStr = data[0];
+            } else {
+                System.out.println("[client] command error");
+            }
 
-			if( readByteCount <= -1 ) {
-				System.out.println( "[client] disconnection by server" );
-				return;
-			}
-			String data2 = new String( buffer, 0, readByteCount);
-			System.out.println( "[client] received:" + data2 );
-			
-		} catch( ConnectException e ) {
-			System.out.println( "[client] not connect" );
-	    } catch( SocketTimeoutException e ) {
-			System.out.println( "[client] read timeout" );
-		} catch( IOException e ) {
-			e.printStackTrace();
-		} finally {
-			try {
-				if (socket != null && socket.isClosed() == false) {
-					socket.close();
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-	}
+            if(outStr != null) {
+                os.write(outStr.getBytes());   //송신
+            }
+
+        } catch (ConnectException e) {
+            System.out.println("[client] not connect");
+        } catch (SocketTimeoutException e) {
+            System.out.println("[client] read timeout");
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (socket != null && socket.isClosed() == false) {
+                    socket.close();
+                    System.out.println("[client] disconnection");
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 }

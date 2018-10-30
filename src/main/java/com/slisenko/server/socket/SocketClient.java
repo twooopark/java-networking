@@ -32,7 +32,6 @@ public class SocketClient {
                 writer.println("read from " + readFromServer); // Blocking call
                 writer.flush();
 
-                log""
                 log("send to " + socket.getRemoteSocketAddress() + " > " + request);
             }
         } catch (IOException e) {
