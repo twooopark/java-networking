@@ -19,15 +19,12 @@ public class BasicPacket implements Serializable {
     public Header getHeader() {
         return header;
     }
-
     public void setHeader(Header header) {
         this.header = header;
     }
-
     public byte[] getData() {
         return data;
     }
-
     public void setData(byte[] data) {
         this.data = data;
     }
@@ -47,7 +44,6 @@ class Header implements Serializable {
     private int cmd;
     private int size;
     //private int time; //UnixTime
-
     Header(int cmd) {
         this.cmd = cmd;
     }
@@ -60,15 +56,12 @@ class Header implements Serializable {
     public int getCmd() {
         return cmd;
     }
-
     public void setCmd(int cmd) {
         this.cmd = cmd;
     }
-
     public int getSize() {
         return size;
     }
-
     public void setSize(int size) {
         this.size = size;
     }

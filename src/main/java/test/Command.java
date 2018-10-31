@@ -14,5 +14,5 @@ public class Command{
     static final byte DELETE = 2;
     static final byte UPDATE = 3;
     static final byte INSERT = 4;
-    static final byte PRINT = 127;
+    static final byte PRINT = 5;//127;
 }
