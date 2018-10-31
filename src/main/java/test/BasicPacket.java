@@ -6,7 +6,11 @@ public class BasicPacket implements Serializable {
     private Header header;
     private byte[] data;
 
-    BasicPacket(int cmd, int size, byte[] data){
+    BasicPacket(int cmd) {
+        this.header = new Header(cmd);
+    }
+
+    BasicPacket(int cmd, int size, byte[] data) {
         this.header = new Header(cmd, size);
         this.data = new byte[size];
         this.data = data;
@@ -44,7 +48,11 @@ class Header implements Serializable {
     private int size;
     //private int time; //UnixTime
 
-    Header(int cmd, int size){
+    Header(int cmd) {
+        this.cmd = cmd;
+    }
+
+    Header(int cmd, int size) {
         this.cmd = cmd;
         this.size = size;
     }

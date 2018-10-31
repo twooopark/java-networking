@@ -15,8 +15,48 @@ public class Client {
         try {
             socket.connect(new InetSocketAddress(SERVER_IP, SERVER_PORT));
 
+            OutputStream os = socket.getOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(os);
+
+            String inStr = null;
+            BasicPacket bp = null;
+
+            System.out.println("[client] /명령어 내용 입력");
+
+            BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+            inStr = br.readLine();
+            inStr = "/PRINT Byte Stream부터 알아보자. Byte St 보면 그림도 Byte들로 이루어져 있고, 텍스트도 Byte로 이루어져 있다. 그리고 zip이나 jar같은 압축 파일도 일단은 Byte로 되어 있다. 이 Byte들이 적절하게 변환되면 의미 있는 데이터가 되는 것이다. Byte Stream의 경우에는 원시 Byte를 그대로 주고 받겠다는 의미를 담고있다.";
+
+            String[] data = inStr.split(" ", 2);
+
+            //명령어 별 처리
+            String cmd = data[0].toUpperCase();
+            if ("/PRINT".equals(cmd)) {
+                bp = new BasicPacket(Command.PRINT, data[1].length(), data[1].getBytes());
+            } else if ("/QUIT".equals(cmd)) {
+                bp = new BasicPacket(Command.QUIT);
+            } else {
+                System.out.println("[client] command error");
+            }
+
+            if (bp != null) {
+                oos.writeObject(bp);
+            }
+/*
+            //CSV 변환
+            String csv = String.format("%s,%s,%s", bp.getHeader().getCmd(), bp.getHeader().getSize(), new String(bp.getData()));
+            System.out.println(csv);
+
+            //JSON 변환
+            String json = String.format(
+                    "{\"cmd\":\"%s\",\"size\":\"%s\",\"data\":\"%s\"}",
+                    bp.getHeader().getCmd(), bp.getHeader().getSize(), new String(bp.getData()));
+            System.out.println(json);
+*/
+/*
             BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
             OutputStream os = socket.getOutputStream();
+
 
             String inStr, outStr = null;
 
@@ -44,7 +84,7 @@ public class Client {
             if(outStr != null) {
                 os.write(outStr.getBytes());   //송신
             }
-
+*/
         } catch (ConnectException e) {
             System.out.println("[client] not connect");
         } catch (SocketTimeoutException e) {
