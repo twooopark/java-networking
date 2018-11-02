@@ -8,7 +8,7 @@ import java.net.SocketException;
 
 public class ServerSTR {
     private static final int PORT = 5000;
-    private static final int BUFFERSIZE = 2;
+    private static final int BUFFERSIZE = 256;
 
     public static void main(String[] args) throws IOException {
         ServerSocket serverSocket = new ServerSocket(PORT);
@@ -27,23 +27,24 @@ public class ServerSTR {
 
                 if (readByteCount > 0) {
                     String inStr = new String(buffer, 0, readByteCount);
-                    String[] data = inStr.split(",", 2);//3);
-                    int cmd = Integer.parseInt(data[0]);
-
-                    if (cmd == Command.PRINT) {
-                        System.out.println("[server] PRINT\n" + data[1]);//2]);
-                    } else if (cmd == Command.QUIT) {
-                        System.out.println("[server] QUIT");
-                        break;
-                    } else {
-                        System.out.println("[server] command error");
-                    }
-
-                    //BUFFERSIZE 보다 내용이 긴 경우, 계속해서 읽는다.
-                    while (0 < (readByteCount = is.read(buffer))) {
-                        inStr = new String(buffer, 0, readByteCount);
-                        System.out.print(inStr);
-                    }
+                    System.out.println(inStr);
+//                    String[] data = inStr.split(",", 2);//3);
+//                    int cmd = Integer.parseInt(data[0]);
+//
+//                    if (cmd == Command.PRINT) {
+//                        System.out.println("[server] PRINT\n" + data[1]);//2]);
+//                    } else if (cmd == Command.QUIT) {
+//                        System.out.println("[server] QUIT");
+//                        break;
+//                    } else {
+//                        System.out.println("[server] command error");
+//                    }
+//
+//                    //BUFFERSIZE 보다 내용이 긴 경우, 계속해서 읽는다.
+//                    while (0 < (readByteCount = is.read(buffer))) {
+//                        inStr = new String(buffer, 0, readByteCount);
+//                        System.out.print(inStr);
+//                    }
                 }
 
 
@@ -68,5 +69,4 @@ public class ServerSTR {
         }
     }
 }
-
 
