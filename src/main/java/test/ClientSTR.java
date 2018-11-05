@@ -38,7 +38,7 @@ public class ClientSTR {
 //              outStr = data[0] + "," + data[1];
                 outStr = data[0] + "," + data[1].length() + "," + data[1];
             } else if ("/CALC".equals(cmd)) {
-                outStr = String.valueOf(Command.REQUEST) + (data[1].length()) + data[1];
+                outStr = StaticVal.REQUEST + (data[1].length()) + data[1];
             } else if ("/QUIT".equals(cmd)) {
                 data[0] = String.valueOf(Command.QUIT);
                 outStr = data[0];
