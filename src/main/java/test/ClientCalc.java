@@ -84,6 +84,15 @@ public class ClientCalc {
 
                     Long length = Long.parseLong(leng);
 
+                    StringBuffer data = new StringBuffer();
+                    data.append(s.substring(14));
+
+                    if(readByteCount == StaticVal.BUFFERSIZE){
+                        while( (readByteCount = is.read(buffer)) != -1 ){
+                            data.append(buffer);
+                        }
+                    }
+
                 }
                 else{
                     System.out.println("type error:"+type);
