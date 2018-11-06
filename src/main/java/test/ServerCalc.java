@@ -13,6 +13,7 @@ import java.nio.channels.ScatteringByteChannel;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
+import java.util.Stack;
 
 /*
 1. [클라이언트] 헤더 송신
@@ -54,20 +55,26 @@ public class ServerCalc {
                     //1byte char -> 2byte char
                     StringBuffer sb = new StringBuffer();
                     for (int i = 0; i < StaticVal.LENGTH_MAX_SIZE; i++)
-                        sb.append(length.get(i));
+                        sb.append((char)length.get(i));
 
-                    CalcPacket cp = new CalcPacket(new CalcHeader(
-                            type.getChar(),
-                            precision.getChar(),
-                            Long.parseLong(sb.toString())
-                    ));
+//                    CalcPacket cp = new CalcPacket(new CalcHeader(
+//                            type.getChar(),
+//                            precision.getChar(),
+//                            length.getLong(2)
+////                            Long.parseLong(sb.toString())
+//                    ));
+
+                    Long bodyLength = Long.parseLong(sb.toString());
+                    StringBuffer bodyData = new StringBuffer();
 
                     //4. [서버] 바디 수신
                     ByteBuffer data = ByteBuffer.allocate(StaticVal.BUFFERSIZE);
 
                     //버퍼 사이즈보다 작다면, 버퍼 사이즈 작게 재조정
-                    if (StaticVal.BUFFERSIZE > cp.getHeader().getLength())
-                        data = ByteBuffer.allocate((int) cp.getHeader().getLength());
+                    if (StaticVal.BUFFERSIZE > bodyLength)
+                        data = ByteBuffer.allocate(Integer.parseInt(sb.toString()));
+//                    if (StaticVal.BUFFERSIZE > cp.getHeader().getLength())
+//                        data = ByteBuffer.allocate((int) cp.getHeader().getLength());
 
                     int readByteCount = -1;
                     while ((readByteCount = socketChannel.read(data)) > 0) {
@@ -79,26 +86,63 @@ public class ServerCalc {
                         byte[] cb = new byte[readByteCount];
                         data.get(cb);
                         for (int i = 0; i < readByteCount; i++) {
-                            cp.append((char) cb[i]);
+//                            cp.append((char) cb[i]);
+                            bodyData.append((char) cb[i]);
                         }
-
-//                        System.out.println(cp.getData().toString());
-
                         //pointer = 0
                         data.clear();
                     }
 
-                    for (int i = 0; i < cp.getHeader().getLength(); i++) {
-                        int x = cp.getData().charAt(i);
-                        //연산자
-                        if (StaticVal.op.contains(x)) { //if(x < 48 || 57 < x)
-                            System.out.println(x);
-                        }
-                        //피연산자
-                        else {
+                    //후위표기 연산
+                    Stack calcSt = new Stack();
 
+                    //중위표기 -> 후위표기 변환
+                    Stack tranSt = new Stack();
+                    String rst = "";
+                    //데이터 하나씩 읽어들인다.
+                    for (int i = 0; i < bodyLength; i++) {
+                        char x = bodyData.charAt(i);
+//                    for (int i = 0; i < cp.getHeader().getLength(); i++) {
+//                        char x = cp.getData().charAt(i);
+                        //피연산자
+                        if (!StaticVal.op.contains(x)) { //if(x < 48 || 57 < x)
+                            rst += x;
                         }
+                        //연산자
+//                        else if( x == ')'){
+//                            while((char)tranSt.peek() != '(')
+//                                rst += tranSt.pop();
+//                            tranSt.pop(); // '(' 제거
+//                        }
+                        else{
+//                            rst += " ";
+
+                            calcSt.push(rst);//임시
+                            rst = "";
+
+                            if(!tranSt.isEmpty()) {
+//                                if( x != '(')
+//                                    rst += tranSt.pop();
+                                calcSt.push(tranSt.pop());//임시
+                                tranSt.push(x);
+                            }
+                            else{
+                                tranSt.push(x);
+                            }
+                        }
+//                        else {
+//                            st.push(rst);
+//
+//                            //rst += " ";
+//                        }
                     }
+                    calcSt.push(rst);//임시
+                    calcSt.push(tranSt.pop());//임시
+//                    rst += tranSt.pop();
+//                    System.out.println("\n"+rst);
+
+                    Calc(calcSt);
+
                 }
 
             } catch (SocketException e) {
@@ -120,6 +164,10 @@ public class ServerCalc {
 
 
         }
+    }
+
+    private static void Calc(Stack calcSt) {
+        calcSt.pop();
     }
 }
 

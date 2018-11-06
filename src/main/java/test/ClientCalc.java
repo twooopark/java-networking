@@ -40,22 +40,26 @@ public class ClientCalc {
                 //headByteBuf.order(ByteOrder.LITTLE_ENDIAN);
 
                 //type : 2byte
-                headByteBuf.put((byte)0);
-                headByteBuf.put((byte)1);
+                headByteBuf.put((byte)0x30);
+                headByteBuf.put((byte)0x31);
+//                headByteBuf.putChar('1');
 
                 //precision : 2byte
-                headByteBuf.put((byte)0);
-                headByteBuf.put((byte)0);
+                headByteBuf.put((byte)0x30);
+                headByteBuf.put((byte)0x31);
+//                headByteBuf.putChar('0');
 
                 //데이터 길이, 문자열
                 //Long -> String -> char -> byte
                 fLength = String.valueOf(file.length());
-                System.out.println(fLength);
-                headByteBuf.put(new byte[StaticVal.LENGTH_MAX_SIZE - fLength.length()]); //padding
+                for(int i=0; i<StaticVal.LENGTH_MAX_SIZE - fLength.length(); i++){
+                    headByteBuf.put((byte)0x30);
+                }
+//                headByteBuf.put(new byte[StaticVal.LENGTH_MAX_SIZE - fLength.length()]); //padding
 
                 //2byte char -> 1byte char
                 for(int i=0; i<fLength.length(); i++)
-                    headByteBuf.put((byte)((int)fLength.charAt(i)-48));
+                    headByteBuf.put((byte)((int)fLength.charAt(i)));//-48));
 
                 //1. [클라이언트] 헤더 송신
                 headByteBuf.flip();
